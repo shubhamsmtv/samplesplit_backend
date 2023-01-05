@@ -1,0 +1,33 @@
+const express = require('express');
+const app = express();
+const {check, validationResult} = require('express-validator');
+const userController = require('../controller/userController');
+const withoutToken = require('../helper/withoutToken');
+const validatetoken = require('../helper/validatetoken');
+
+app.post('/singup', userController.createUser);
+app.post('/login', userController.login);
+app.post('/forgetPassword', userController.sendOtp);
+app.post('/otpVerify',userController.otp_verify);
+app.post('/resetPassword',userController.resetPassword);
+app.get('/getAllPublicMusic', userController.getallPublicMusic);
+app.get('/mostplayed/:musicId', userController.mostplayed);
+app.get('/mostDiscuss/:musicId', userController.mostDiscuss);
+app.get('/getBloges', userController.getBlog);
+app.get('/search', userController.search);  
+app.delete('/logout', userController.logOut);
+app.get('/getSongByTracktype', userController.getSongByTracktype);
+app.get('/downloadedSong', validatetoken.validateToken, userController.downloadSong);
+app.get('/getAllSubscription', validatetoken.validateToken, userController.getSubscription);
+app.post('/Pay/:id', validatetoken.validateToken, userController.pay);
+app.get('/paymentSuccess/:id', validatetoken.validateToken, userController.paymentSuccess);
+app.get('/cancelPayment', validatetoken.validateToken, userController.cancelPayment);
+app.post('/DonationPay', validatetoken.validateToken, userController.DonationPay);
+app.get('/successDonation',validatetoken.validateToken, userController.successDonation);
+app.get('/getUserDetail', validatetoken.validateToken, userController.getUserDetail);
+app.get('/getDownloadSong/:id', validatetoken.validateToken, userController.getDownloadSong);
+app.post('/getTwoStemsAudio', userController.getTwoStemsAudio);
+app.post('/getFourStemsAudio', userController.getFourStemsAudio);
+app.get('/token',validatetoken.validateToken, userController.check); 
+
+module.exports = app;   
