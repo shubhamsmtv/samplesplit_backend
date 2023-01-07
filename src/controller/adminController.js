@@ -7,10 +7,10 @@ const fs = require('file-system');
 const joiValidation = require('../helper/joiValidation');
 const { sequelize } = require('../helper/SequelizeConnection');
 const { Admin, StoreToken, AdminMusic, Blog, OTP, Subscription } = require('../module/adminModule');
-const { Playmusic, User, UserSubscription } = require('../module/userModule');
+const { Playmusic, User, UserSubscription, Donation } = require('../module/userModule');
 const decodeToken = require('../helper/decodedtoken');
 const sendEmail = require('../helper/sendEmail');
-const { Op, where, Model } = require('sequelize');
+const { Op} = require('sequelize');
 const moment = require('moment');
 
 
@@ -68,9 +68,7 @@ module.exports.sendOTP = async (req, res) => {
         });
         joiValidation.validateSchema(schema, req.body);
         const email = req.body.email;
-        console.log('eee', email)
         const user = await Admin.findOne({ where: { email: email } });
-        console.log('email', user)
         if (user) {
             const otp = random.int(1000, 9000);
             const userId = user.id;
@@ -110,10 +108,8 @@ module.exports.otpverify = async (req, res) => {
         if (getOTP) {
             const currentTime = new Date();
             const createTime = getOTP.updateDate;
-            console.log('curr',currentTime, createTime)
             var difference = currentTime.getTime() - createTime.getTime();
             var Minutes = Math.round(difference / 60000);
-            console.log('result',Minutes)
             if(Minutes > -1 && Minutes < "5"){
                 res.status(200).json({ 'status': 'true', 'message': 'OTP is veryfied' });
             }
@@ -344,7 +340,6 @@ module.exports.updateMusic = async (req, res) => {
                     res.status(200).json({ 'status': 'true', 'message': 'Please Enter A new tarckTitle' });
                 }
                 else {
-                    console.log('111111111111111111')
                     const trackTitle = req.body.trackTitle;
                     const music = req.files.music;
                     const musicName = music.name;
@@ -370,7 +365,6 @@ module.exports.updateMusic = async (req, res) => {
                     res.status(200).json({ 'status': 'true', 'message': 'Please Enter A new tarckTitle' });
                 }
                 else {
-                    console.log('22222222222222')
                     const trackTitle = req.body.trackTitle;
                     const music = req.files.music;
                     const musicName = music.name;
@@ -386,7 +380,6 @@ module.exports.updateMusic = async (req, res) => {
                 }
             }
             else {
-                console.log('333333333333333')
                 const image = req.files.image
                 const imageExtantion = image.name.split('.').pop();
                 const imageNewName = today.getTime() + '' + random.int(1, 10000) + '.' + imageExtantion;
@@ -472,7 +465,7 @@ module.exports.changeStatus = async (req, res) => {
 // Add Payment on Song Api Start ->>>>
 module.exports.AddPayment = async (req, res) => {
     try {
-        const audioId = req.params.audioId;
+        const audioId = req.body.audioId;
         const amount = req.body.amount;
         if (audioId && amount) {
             const addPrice = await AdminMusic.update({ price: amount }, { where: { id: audioId } });
@@ -600,8 +593,8 @@ module.exports.getTopTrack = async (req, res) => {
 // Top Track By Date Api Start ->>>>
 module.exports.topTrackByDate = async (req, res) => {
     try {
-        const todayDate = moment().format('YYYY-MM-DD');
-        console.log('today', todayDate)
+        const todayDate = new Date();
+        const tDate = todayDate.getFullYear()+'-'+todayDate.getMonth()+1+'-'+todayDate.getDate();
         const beforOneWeek = moment().subtract(7, 'days').format('YYYY-MM-DD');
         const OneMonth = moment().subtract(30, 'days').format('YYYY-MM-DD');
         let filterSort;
@@ -613,7 +606,7 @@ module.exports.topTrackByDate = async (req, res) => {
             filterSort = beforOneWeek;
         }
         else {
-            filterSort = todayDate;
+            filterSort = tDate;
         }
         const sumtData = await Playmusic.sum('Played', {
             where: {
@@ -622,7 +615,6 @@ module.exports.topTrackByDate = async (req, res) => {
                 }
             }
         })
-        console.log('sum', sumtData);
         if (sumtData) {
             res.status(200).json({ 'status': 'true', sumtData });
         }
@@ -790,7 +782,6 @@ module.exports.updateBlogById = async (req, res) => {
                     image.mv(uploadImage);
                     blogData.imageName = imageNewName;
                     const update = await Blog.update(blogData, { where: { id: blogId } });
-                    console.log(update);
                     if (update) {
                         res.status(201).json({ 'status': 'true', 'message': 'Blog Update SuccessFully' });
                     }
@@ -900,11 +891,9 @@ module.exports.getTotalSubAmount = async (req, res) => {
     try {
         const tokenData = await decodeToken.decodeToken(req);
         const userId = tokenData.userId;
-        console.log('userId', userId);
         if (userId) {
             const getTotal = await UserSubscription.sum('subscriptionPrice');
             res.status(200).json({ 'status': 'true', getTotal });
-            console.log(getTotal);
         }
         else {
             res.json('Token is required');
@@ -921,11 +910,9 @@ module.exports.totalSub = async (req, res) => {
     try {
         const tokenData = await decodeToken.decodeToken(req);
         const userId = tokenData.userId;
-        console.log('userId', userId);
         if (userId) {
             const getTotalSub = await UserSubscription.count('subscriptionTitle');
             res.status(200).json({ 'status': 'true', getTotalSub });
-            console.log(getTotalSub);
         }
         else {
             res.json('Token is required');
@@ -963,10 +950,15 @@ module.exports.countAllSong = async (req, res) => {
 // Get all user list API start ->>>>
 module.exports.user_list = async(req,res) => {
     try {
+        const page = req.params.page;
         const user_list = await User.findAndCountAll({
             attributes : [
-                'id','username','email','country','createDate',
-            ]
+                'id','username','email','country',
+                // [sequelize.fn('TIME', sequelize.col('createDate')), 'Time'],
+                [sequelize.fn('DATE', sequelize.col('createDate')), 'Date']
+            ],
+            limit :[((page-1)*5), 5],
+            order : [['topuser','DESC']]
         });
         if(user_list){
             res.status(200).json({"status":"true",user_list});
@@ -975,30 +967,45 @@ module.exports.user_list = async(req,res) => {
             res.status(404).json({"status":"false","message":"Data not found"});
         }
     } catch (error) {
-        console.log('countAllSong Error', error);
+        console.log('user_list Error', error);
         res.status(400).json(error.message);
     }
 }
 // Get all user list API end ->>>>
 
+
 // Get user detail by Id API Start ->>>>>
-// module.exports.user_detail = (req,res) => {
-//     try {
-//         const userId = req.params.id;
-//         console.log('userId',userId)
-//     } catch (error) {
-//         console.log('countAllSong Error', error);
-//         res.status(400).json(error.message);
-//     }
-// }
+module.exports.user_detail = async(req,res) => {
+    try {
+        const userId = req.params.id;
+        console.log('userId',userId)
+        const data = await User.findAll({include:[{model: Donation, as: 'assciationName'}]});
+        console.log('dataa',data)
+    } catch (error) {
+        console.log('user_detail Error', error);
+        res.status(400).json(error.message);
+    }
+}
 // Get user detail by Id API Start ->>>>>
+
+// Get All Donation API Start ->>>>>
+module.exports.totalDonation = async(req,res) => {
+    try {
+        const data = await Donation.sum("amount");
+        res.status(200).json({'status':'true',data});
+    } catch (error) {
+        console.log('totalDonation Error', error);
+        res.status(400).json(error.message);
+    }
+}
+// Get All Donation API Start ->>>>>
+
 
 
 // Logout Admin API Start ->>>>
 module.exports.logOut = async (req, res) => {
     try {
         const getDataByToken = await decodeToken.decodeToken(req);
-        console.log(getDataByToken)
         if (getDataByToken && getDataByToken.userToken) {
             const userToken = getDataByToken.userToken;
             const response = await StoreToken.destroy({ where: { userToken: userToken } });
@@ -1015,4 +1022,3 @@ module.exports.logOut = async (req, res) => {
     }
 }
 // Logout Admin API Start ->>>>
-

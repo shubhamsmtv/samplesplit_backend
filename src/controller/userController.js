@@ -36,7 +36,6 @@ module.exports.createUser = async (req, res) => {
     try {
         const ip = '2405:201:300c:9120:ecd2:4d0:5523:6114';
         const geo = geoIp.lookup(ip);
-        console.log(geo);
         const schema = joi.object({
             username: joi.string().required(),
             email: joi.string().email().required(),
@@ -122,7 +121,6 @@ module.exports.sendOtp = async (req, res) => {
         const email = req.body.email;
         const emailData = await User.findOne({ where: { email: email } });
         if (emailData) {
-            console.log('emailData', emailData)
             const otp = random.int(100000, 900000);
             const subject = "OTP For conformation Email";
             const text = "Hello Sir" + ' ' + emailData.name + ' ' + " Your otp is" + ' ' + otp;
@@ -158,8 +156,6 @@ module.exports.otp_verify = async (req, res) => {
             const createTime = otpData.updateDate;
             var difference = currentTime.getTime() - createTime.getTime();
             var Minutes = Math.round(difference / 60000);
-            console.log("@@@@@@@@",currentTime, createTime)
-            console.log('result',Minutes)
             if(Minutes > -1 && Minutes < "5"){
                 res.status(200).json({ 'status': 'true', 'message': 'OTP is veryfied' });
             }
@@ -329,7 +325,6 @@ module.exports.getBlog = async (req, res) => {
             order: [['createDate', 'DESC']]
         })
         if (findBlog) {
-            // console.log('find', findBlog[0].dataValues.imageName);
             res.status(200).json({ 'status': 'true', findBlog });
         }
         else {
@@ -456,7 +451,6 @@ module.exports.downloadSong = async (req, res) => {
         const tokenData = await decodeToken.decodeToken(req);
         if (tokenData) {
             if (req.query.trackTitle) {
-                console.log(req.query.trackTitle);
                 const downloaded = '1'
                 const todayDate = moment().format('YYYY-MM-DD');
                 const data = {
@@ -660,14 +654,12 @@ module.exports.getUserDetail = async (req, res) => {
                         userId: getData.id
                     }
                 });
-                console.log('subplan', subPlanData.expireDate)
                 if (subPlanData && subPlanData.expireDate >= todayDate) {
                     let PlanData = subPlanData;
                     const exfDate = subPlanData.expireDate;
                     let diff = moment(exfDate);
                     let currentDate = moment(todayDate);
                     const Datediff = diff.diff(currentDate, 'days');
-                    console.log('dateDiff', Datediff)
                     PlanData.dataValues.expireIn = Datediff + ' ' + 'days';
                     res.status(200).json({ 'status': 'true', PlanData, getData });
                 }
@@ -693,7 +685,6 @@ module.exports.DonationPay = (req, res) => {
     try {
         const title = req.body.title;
         const amount = req.body.amount;
-        console.log(title, amount);
         const create_payment_json = {
             "intent": "sale",
             "payer": {
@@ -758,7 +749,6 @@ module.exports.successDonation = (req, res) => {
         };
         paypal.payment.execute(paymentId, execute_payment_json, async function (error, payment) {
             if (error) {
-                console.log(error.response);
                 throw error;
             } else {
                 const payData = {
@@ -794,7 +784,6 @@ module.exports.getTwoStemsAudio = async (req, res) => {
             const music = req.files.file_name;
             const folder = moment().format('YYYY_MM_DD');
             const yesterDay = moment().subtract(2, 'days').format('YYYY-MM-DD');
-            console.log('tow', yesterDay)
             let extension = music.name.split('.').pop();
             if (!fs.existsSync('public/files2stem/' + folder)) {
                 fs.mkdirSync('public/files2stem/' + folder);
@@ -821,7 +810,6 @@ module.exports.getTwoStemsAudio = async (req, res) => {
                         console.log('stderr', stderr);
                         res.status(200).json(stderr);
                     }
-                    console.log('stdout', stdout);
                     if (stdout) {
                         if (type == 'vocals') {
                             res.status(200).json({
@@ -896,7 +884,6 @@ module.exports.getFourStemsAudio = async (req, res) => {
                         console.log('stderr', stderr);
                         res.status(200).json(stderr);
                     }
-                    console.log('stdout', stdout);
                     if (stdout) {
                         if (type == 'vocals') {
                             res.status(200).json({
@@ -974,7 +961,6 @@ module.exports.logOut = async (req, res) => {
 module.exports.check = async (req, res) => {
     try {
         const getDataByToken = await decodeToken.decodeToken(req);
-        console.log('Token', getDataByToken);
         if (getDataByToken.userId) {
             res.status(200).json({ 'status': 'true', 'message': 'logedIN' });
         }

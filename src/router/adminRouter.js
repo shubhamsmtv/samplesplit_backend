@@ -14,7 +14,7 @@ app.get('/getAllAudio',validatetoken.validateToken, adminController.getAllAudio)
 app.get('/editAudio/:audioId',validatetoken.validateToken, adminController.editAudio);
 app.post('/updateAudioById/:audioId', validatetoken.validateToken, adminController.updateMusic);
 app.get('/changeStatus/:audioId',validatetoken.validateToken, adminController.changeStatus);
-app.post('/AddPayment/:audioId', validatetoken.validateToken, adminController.AddPayment);
+app.post('/AddPayment', validatetoken.validateToken, adminController.AddPayment);
 app.delete('/deleteAudio/:audioId',validatetoken.validateToken, adminController.deleteAudio);
 app.get('/getAdminProfile', validatetoken.validateToken, adminController.getProfile);
 app.post('/updateProfile', validatetoken.validateToken, adminController.updateProfile);
@@ -32,8 +32,8 @@ app.get('/getBlogById/:id', validatetoken.validateToken, adminController.getBlog
 app.put('/updateBlogById/:blogId', validatetoken.validateToken, adminController.updateBlogById);
 app.delete('/deleteblog/:blogId', validatetoken.validateToken, adminController.deleteBlog);
 app.get('/countAllSong', validatetoken.validateToken, adminController.countAllSong);
-app.get('/getAlluser', validatetoken.validateToken, adminController.user_list);
-// app.get('/getuserDetiails/:id', validatetoken.validateToken, adminController.user_detail);
-
+app.get('/getAlluser/:page', validatetoken.validateToken, adminController.user_list);
+app.get('/getuserDetiails/:id',  adminController.user_detail);
+app.get ('/getAllDonation', validatetoken.validateToken, adminController.totalDonation);
 
 module.exports = app;   

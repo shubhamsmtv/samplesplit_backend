@@ -161,6 +161,14 @@ const Donation = sequelize.define('userDonation',{
     },
 },{tableName : 'userDonation'})
 
+Donation.hasMany(User,{
+    sourceKey:'userEmail',
+    foreignKey:'email',
+    as:'userDonation'
+});
+
+
+
 module.exports = {
     User,
     Playmusic,
